@@ -1,0 +1,98 @@
+### Zabbix Server Setup
+
+## Install Prerequisites (Apache)
+sudo yum -y install httpd
+
+## Enable and start apache service
+sudo systemctl enable httpd.service
+sudo systemctl start httpd.service
+
+## Configure PHP Repo // Install PHP 7.2
+sudo yum -y install epel-release
+sudo yum install http://rpms.remirepo.net/enterprise/remi-release-7.rpm -y
+
+## Disable PHP 5
+sudo yum-config-manager --disable remi-php54
+
+## Enable PHP 7.2
+sudo yum-config-manager --enable remi-php72
+
+## Install PHP and additional components
+sudo yum -y install php php-pear php-cgi php-common php-mbstring php-snmp php-gd php-pecl-mysql php-xml php-mysql php-gettext php-bcm
+
+## Update regional language info in PHP.
+>update the file /etc/php.ini
+> From --> ;date.timezone =
+> To   --> date.timezone = Europe/London
+
+### Install & Configure MariaDB
+sudo yum --enablerepo=remi install mariadb-server -y
+
+## Enable MariaDB service
+sudo systemctl enable mariadb
+
+## Start MariaDB services
+sudo systemctl start mariadb.service
+
+## Security recommendations for MySQL
+mysql_secure_installation
+
+#Configure MySQL
+mysql -u root -p
+
+  create database devminds_zabbix;
+  create user 'zabbixdevminds'@'localhost' identified BY 'zabbixdevminds';
+  grant all privileges on devminds_zabbix.* to zabbixdevminds@localhost;
+  flush privileges;
+  
+### Install Zabbix Server (and Agent)
+
+## Add Zabbix repo
+sudo rpm -ivh https://repo.zabbix.com/zabbix/4.0/rhel/7/x86_64/zabbix-release-4.0-1.el7.noarch.rpm
+
+## Install Zabbix (Incl. Agent)
+sudo yum -y install zabbix-server-mysql  zabbix-web-mysql zabbix-agent zabbix-get
+  
+## Configure Zabbix
+sudo vim /etc/httpd/conf.d/zabbix.conf
+  php_value date.timezone Europe/London
+  
+## Restart Apache
+sudo systemctl restart httpd
+
+cd /usr/share/doc/zabbix-server-mysql-4.0.12/
+
+## Import the SQL.dump file
+zcat create.sql.gz | mysql -u zabbixdevminds -p devminds_zabbix
+
+## Config Zabbix configration file with DB details:
+sudo vim /etc/zabbix/zabbix_server.conf
+
+  Update the following fields:
+  DBHost=localhost
+  DBName=devminds_zabbix
+  DBUser=zabbixdevminds
+  DBPassword=zabbixdevminds  ** Need to uncomment this section
+  
+## Start and enable the services at start-up
+sudo systemctl enable zabbix-server.service
+sudo systemctl start zabbix-server.service
+
+## Start and enable Zabbix-Agent at start-up
+sudo systemctl start zabbix-agent
+sudo systemctl enable zabbix-agent
+
+http://IPADDRESS/zabbix
+## Test credentials  = Default credentials admin / zabbix
+
+--> Login into the browser at URL http://[IPADDRESS]/zabbix
+----> Complete the initial setup configuration
+------> *Make sure you change the settings in the configuration file
+------= "post_max_size"  /  "max_execution_time" / "max_input_time"
+--------> configure the DB settings
+
+## Confirm that you can login to Zabbix Server http://[IPADDRESS]/zabbix
+Zabbix API details = Admin / zabbix
+
+
+
