@@ -1,0 +1,57 @@
+### Prerequisites: Nice to have, but not essential
+sudo yum check-update -y
+sudo yum install vim -y
+sudo yum install wget -y
+
+### Option #3 (Preferred) Install via a Grafana repo ###
+
+sudo -i
+
+#### Setup and configure the YUM repository
+# Create the following Repo location:
+
+sudo cat >> /etc/yum.repos.d/grafana.repo <<EOL
+
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+EOL
+
+## Perform an update on the YUM repository
+sudo yum check-update -y
+
+## Install Grafana
+sudo yum install grafana -y
+
+## Enable Grafana Server service at start-up
+systemctl daemon-reload
+# Refresh the sevices list
+systemctl enable grafana-server.service
+
+### Installing Server side image rendering (optional)
+sudo yum install fontconfig freetype* urw-fonts -y
+
+### Install Zabbix Plugin
+grafana-cli plugins install alexanderzobnin-zabbix-app
+
+## Restart Grafana (to apply changes)
+sudo systemctl restart grafana-server.service
+
+## Enable the Zabbix plugin
+Login to the web browser http://[IPADDRESS]:3000 --> Installed Apps --> select Zabbix --> "enable"
+
+##Completed Zabbix Server configuration (documentation 2_Zabbix https://github.com/michaelrich792/grafana-zabbix/blob/master/2_zabbix)
+###Once complete return back to this document. 
+####Completed Zabbix Server configuration
+
+## Complete the Grafana "Add Data Source" setting in Grafana
+
+## Zabbix API details: (default Zabbix server) U = admin / P= zabbix
+
+
